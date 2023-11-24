@@ -1,0 +1,42 @@
+schemaVersion: 2.1.0
+metadata:
+  name: android-app-dev
+components:
+  - container:
+      env:
+        - name: PLUGIN_REMOTE_ENDPOINT_EXECUTABLE
+          value: /remote-endpoint/plugin-remote-endpoint
+        - name: THEIA_PLUGINS
+          value: 'local-dir:///plugins/sidecars/universal-developer-image'
+        - name: CHE_DASHBOARD_URL
+          value: 'https://192.168.49.2.nip.io'
+        - name: CHE_PLUGIN_REGISTRY_URL
+          value: 'https://192.168.49.2.nip.io/plugin-registry/v3'
+        - name: CHE_PLUGIN_REGISTRY_INTERNAL_URL
+          value: 'http://plugin-registry.eclipse-che.svc:8080/v3'
+        - name: OPENVSX_REGISTRY_URL
+          value: 'https://open-vsx.org'
+      image: 'artifactory-mb.harman.com:5036/aebt/ubi:next'
+      memoryLimit: 2Gi
+      sourceMapping: /projects
+    name: universal-developer-image
+  - container:
+      args:
+        - sh
+        - '-c'
+        - tail -f /dev/null  
+      image: 'artifactory-mb.harman.com:5036/aebt/abi:next'
+      memoryLimit: 4Gi
+      sourceMapping: /projects
+    name: android-build-image
+commands:
+  - exec:
+      commandLine: ./rpm_compile.sh && echo "\e[32mDone.\e[0m build-android-app"
+      component: android-dev-image
+      workingDir: /projects/Entertainment
+    id: build-android-app
+  - exec:
+      commandLine: 'adb install -r -t -g -d ${input:path} && adb shell am start -n com.harman.e12.app/.media.MediaActivity && echo -e "\e[32mDone.\e[0m instant-deploy"'
+      component: universal-developer-image
+      workingDir: /projects/Entertainment
+    id: instant-deploy
